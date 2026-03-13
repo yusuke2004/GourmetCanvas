@@ -2,7 +2,8 @@
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.12",
-  "typeCheckingMode": "off",
+  "typeCheckingMode": "basic",
   "reportMissingImports": false,
-  "reportMissingModuleSource": false
+  "reportMissingModuleSource": false,
+  "djangoSettingsModule": "config.settings"
 }
