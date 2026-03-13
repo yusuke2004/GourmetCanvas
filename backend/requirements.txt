@@ -7,3 +7,4 @@ python-dotenv
 psycopg2-binary
 whitenoise
 django-stubs
+djangorestframework-stubs
