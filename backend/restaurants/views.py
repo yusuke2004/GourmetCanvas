@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.http import HttpRequest
 from .services.hotpepper_client import (
     search_restaurants,
     search_by_keyword,
@@ -36,12 +37,12 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(["GET"])
-def ping(request):
+def ping(request: HttpRequest) -> Response:
     return Response({"ok": True, "message": "API is working"})
 
 
 @api_view(["GET"])
-def search(request):
+def search(request: HttpRequest) -> Response:
     """
     店舗検索
     GET /api/restaurants/search
@@ -149,7 +150,7 @@ def search(request):
 
 
 @api_view(["GET"])
-def budgets(request):
+def budgets(request: HttpRequest) -> Response:
     """
     予算マスタ取得
     GET /api/restaurants/budgets
@@ -163,7 +164,7 @@ def budgets(request):
 
 
 @api_view(["GET"])
-def genres(request):
+def genres(request: HttpRequest) -> Response:
     """
     ジャンルマスタ取得
     GET /api/restaurants/genres
@@ -226,7 +227,7 @@ def login_view(request):
 
 
 @api_view(["POST"])
-def logout_view(request):
+def logout_view(request: HttpRequest) -> Response:
     """ログアウト"""
     logout(request)
     return Response({"ok": True})
@@ -234,14 +235,14 @@ def logout_view(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def me(request):
+def me(request: HttpRequest) -> Response:
     """現在のユーザー情報"""
     return Response(UserSerializer(request.user).data)
 
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
-def update_profile(request):
+def update_profile(request: HttpRequest) -> Response:
     """プロフィール更新"""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     display_name = request.data.get("display_name")
@@ -288,7 +289,7 @@ def get_or_create_shop(shop_data):
 # ============================================================
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes([IsAuthenticated])
-def favorites_view(request):
+def favorites_view(request: HttpRequest) -> Response:
     if request.method == "GET":
         favs = Favorite.objects.filter(user=request.user).select_related("shop")
         return Response(FavoriteSerializer(favs, many=True).data)
@@ -318,7 +319,7 @@ def favorites_view(request):
 # ============================================================
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def visits_view(request):
+def visits_view(request: HttpRequest) -> Response:
     if request.method == "GET":
         records = VisitRecord.objects.filter(
             user=request.user, visit_count__gt=0
@@ -342,7 +343,7 @@ def visits_view(request):
 # ============================================================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def ratings_view(request):
+def ratings_view(request: HttpRequest) -> Response:
     shop_data = request.data.get("shop", {})
     score = request.data.get("score", 0)
     shop = get_or_create_shop(shop_data)
@@ -359,7 +360,7 @@ def ratings_view(request):
 # ============================================================
 @api_view(["GET", "POST"])
 @permission_classes([AllowAny])
-def comments_view(request, shop_id):
+def comments_view(request: HttpRequest, shop_id: str) -> Response:
     """GET: 特定店舗の全コメント, POST: コメント投稿"""
     try:
         shop = Shop.objects.get(hotpepper_id=shop_id)
@@ -394,7 +395,7 @@ def comments_view(request, shop_id):
 
 @api_view(["PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
-def comment_detail_view(request, comment_id):
+def comment_detail_view(request: HttpRequest, comment_id: int) -> Response:
     """PUT: 自分のコメント編集, DELETE: 自分のコメント削除"""
     try:
         comment = Comment.objects.get(id=comment_id, user=request.user)
@@ -419,7 +420,7 @@ def comment_detail_view(request, comment_id):
 # ============================================================
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes([IsAuthenticated])
-def search_history_view(request):
+def search_history_view(request: HttpRequest) -> Response:
     if request.method == "GET":
         histories = SearchHistory.objects.filter(user=request.user)[:50]  # 最新50件
         return Response(SearchHistorySerializer(histories, many=True).data)
@@ -441,7 +442,7 @@ def search_history_view(request):
 # Share API
 # ============================================================
 @api_view(["GET"])
-def share_view(request, shop_id):
+def share_view(request: HttpRequest, shop_id: str) -> Response:
     """店舗のシェア用URL生成"""
     shop = None
     try:
