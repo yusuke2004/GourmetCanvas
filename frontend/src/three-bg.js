@@ -1,6 +1,6 @@
 /**
  * Three.js 3D Background Animation
- * Colorful orbs, glowing rings, and cursor-following particles for IzakayaReco
+ * Colorful orbs, glowing rings, and cursor-following particles for GourmetCanvas
  */
 import * as THREE from 'three';
 

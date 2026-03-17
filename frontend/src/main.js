@@ -1,5 +1,5 @@
 /**
- * IzakayaReco - Main Application
+ * GourmetCanvas - Main Application
  * SPA with hash routing, Three.js 3D background, and Stitch-inspired design
  */
 import { initThreeBackground } from './three-bg.js';
@@ -170,10 +170,22 @@ function navigateTo(hash) {
     item.classList.toggle('active', item.dataset.page === navPageId);
   });
 
-  window.scrollTo({ top: 0 });
+  if (pageId === 'home' && state.searchResults.length > 0 && state.lastScrollPosition > 0) {
+    window.scrollTo({ top: state.lastScrollPosition, behavior: 'auto' });
+  } else {
+    window.scrollTo({ top: 0 });
+  }
 }
 
 window.addEventListener('hashchange', () => navigateTo(location.hash));
+
+// Track scroll position on home page
+window.addEventListener('scroll', () => {
+  const currentHash = location.hash || '#/';
+  if (currentHash === '#/' || currentHash === '') {
+    state.lastScrollPosition = window.scrollY;
+  }
+});
 
 // ============================================================
 // Global State
@@ -188,6 +200,7 @@ const state = {
   currentPage: 1,
   perPage: 10,
   locationMode: 'gps', // 'gps' or 'station'
+  lastScrollPosition: 0
 };
 
 // ============================================================
@@ -1218,7 +1231,7 @@ function shareShop(shopId) {
   const buildShareData = (shopData) => {
     const baseUrl = window.location.origin;
     const shareUrl = `${baseUrl}/#/detail?shop_id=${shopId}`;
-    const shareText = `おすすめの居酒屋「${shopData?.name || ''}」を見つけました！\n${shareUrl}`;
+    const shareText = `おすすめの飲食店「${shopData?.name || ''}」を見つけました！\n${shareUrl}`;
     return { shareText, shareUrl, shop: shopData };
   };
 
@@ -1247,7 +1260,7 @@ function shareShop(shopId) {
       // Web Share APIが利用可能かチェック
       if (navigator.share) {
         navigator.share({
-          title: `おすすめの居酒屋: ${shopData?.name || ''}`,
+          title: `おすすめの飲食店: ${shopData?.name || ''}`,
           text: shareText,
           url: shareUrl
         }).catch(err => {
@@ -1343,6 +1356,20 @@ function renderReviewHistory() {
   const container = document.getElementById('review-history-list');
   if (!container) return;
 
+  if (!isLoggedIn) {
+    container.innerHTML = `
+      <div class="empty-state glass-card" style="display:flex; flex-direction:column; align-items:center;">
+        <span class="material-icons-round" style="font-size: 3rem; color: var(--primary);">login</span>
+        <p>ログインが必要です</p>
+        <span class="text-muted-sm">レビュー履歴を表示するにはログインしてください</span>
+        <button class="btn primary-btn btn-block" style="margin-top: 1rem; max-width: 280px;" onclick="location.hash='#/login'">
+          <span class="material-icons-round">login</span>
+          <span>ログインする</span>
+        </button>
+      </div>`;
+    return;
+  }
+
   const reviewedShops = [];
   for (const shopId in allComments) {
     const myComments = allComments[shopId].filter(c => c.authorEmail === currentUser.email);
@@ -1395,6 +1422,20 @@ function renderReviewHistory() {
 function renderVisitHistory() {
   const container = document.getElementById('visit-history-list');
   if (!container) return;
+
+  if (!isLoggedIn) {
+    container.innerHTML = `
+      <div class="empty-state glass-card" style="display:flex; flex-direction:column; align-items:center;">
+        <span class="material-icons-round" style="font-size: 3rem; color: var(--primary);">login</span>
+        <p>ログインが必要です</p>
+        <span class="text-muted-sm">来店履歴を表示するにはログインしてください</span>
+        <button class="btn primary-btn btn-block" style="margin-top: 1rem; max-width: 280px;" onclick="location.hash='#/login'">
+          <span class="material-icons-round">login</span>
+          <span>ログインする</span>
+        </button>
+      </div>`;
+    return;
+  }
 
   const visitedShops = [];
   for (const shopId in userShopData) {
@@ -1449,11 +1490,14 @@ function renderSearchHistory() {
 
   if (!isLoggedIn) {
     container.innerHTML = `
-      <div class="empty-state glass-card">
+      <div class="empty-state glass-card" style="display:flex; flex-direction:column; align-items:center;">
         <span class="material-icons-round" style="font-size: 3rem; color: var(--primary);">login</span>
         <p>ログインが必要です</p>
         <span class="text-muted-sm">検索履歴を表示するにはログインしてください</span>
-        <button class="btn-primary" onclick="location.hash='#/login'">ログイン</button>
+        <button class="btn primary-btn btn-block" style="margin-top: 1rem; max-width: 280px;" onclick="location.hash='#/login'">
+          <span class="material-icons-round">login</span>
+          <span>ログインする</span>
+        </button>
       </div>`;
     return;
   }

@@ -48,26 +48,25 @@ def search(request: Request) -> Response:
     GET /api/restaurants/search
     Supports both GPS (lat/lng) mode and keyword (station name) mode.
     """
-    lat = request.GET.get("lat")
-    lng = request.GET.get("lng")
-    range_val = request.GET.get("range", 3)
+    lat_param = request.GET.get("lat")
+    lng_param = request.GET.get("lng")
+    range_param = request.GET.get("range", 3)
     budget = request.GET.get("budget")
     genre = request.GET.get("genre")
     keyword = request.GET.get("keyword")
-    people = request.GET.get("people")
+    people_param = request.GET.get("people")
     free_drink = request.GET.get("free_drink")
     free_food = request.GET.get("free_food")
 
     # Station mode: keyword is provided but no lat/lng
-    if not lat or not lng:
+    if not lat_param or not lng_param:
         if not keyword:
             return Response(
                 {"error": "Either lat/lng or keyword is required."}, status=400
             )
         try:
-            range_val = int(range_val)
-            if people:
-                people = int(people) if people.strip() else None
+            range_val = int(range_param)
+            people = int(people_param) if people_param and people_param.strip() else None
         except ValueError:
             return Response({"error": "Invalid numerical parameters."}, status=400)
         try:
@@ -105,11 +104,10 @@ def search(request: Request) -> Response:
 
     # GPS mode
     try:
-        lat = float(lat)
-        lng = float(lng)
-        range_val = int(range_val)
-        if people:
-            people = int(people) if people.strip() else None
+        lat = float(lat_param) if lat_param else 0.0
+        lng = float(lng_param) if lng_param else 0.0
+        range_val = int(range_param)
+        people = int(people_param) if people_param and people_param.strip() else None
     except ValueError:
         return Response({"error": "Invalid numerical parameters."}, status=400)
 
@@ -290,6 +288,7 @@ def get_or_create_shop(shop_data):
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes([IsAuthenticated])
 def favorites_view(request: Request) -> Response:
+    assert request.user.is_authenticated
     if request.method == "GET":
         favs = Favorite.objects.filter(user=request.user).select_related("shop")
         return Response(FavoriteSerializer(favs, many=True).data)
@@ -312,6 +311,7 @@ def favorites_view(request: Request) -> Response:
         except Shop.DoesNotExist:
             pass
         return Response({"ok": True})
+    return Response({"error": "Method not allowed"}, status=405)
 
 
 # ============================================================
@@ -320,6 +320,7 @@ def favorites_view(request: Request) -> Response:
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def visits_view(request: Request) -> Response:
+    assert request.user.is_authenticated
     if request.method == "GET":
         records = VisitRecord.objects.filter(
             user=request.user, visit_count__gt=0
@@ -336,6 +337,7 @@ def visits_view(request: Request) -> Response:
             user=request.user, shop=shop, defaults={"visit_count": visit_count}
         )
         return Response(VisitRecordSerializer(record).data)
+    return Response({"error": "Method not allowed"}, status=405)
 
 
 # ============================================================
@@ -344,6 +346,7 @@ def visits_view(request: Request) -> Response:
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def ratings_view(request: Request) -> Response:
+    assert request.user.is_authenticated
     shop_data = request.data.get("shop", {})
     score = request.data.get("score", 0)
     shop = get_or_create_shop(shop_data)
@@ -382,7 +385,7 @@ def comments_view(request: Request, shop_id: str) -> Response:
         author_name = "匿名"
         if user:
             profile = getattr(user, "profile", None)
-            author_name = profile.display_name if profile else user.username
+            author_name = profile.display_name if profile else getattr(user, "username", "ユーザー")
 
         comment = Comment.objects.create(
             shop=shop,
@@ -391,12 +394,14 @@ def comments_view(request: Request, shop_id: str) -> Response:
             text=text,
         )
         return Response(CommentReadSerializer(comment).data, status=201)
+    return Response({"error": "Method not allowed"}, status=405)
 
 
 @api_view(["PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
 def comment_detail_view(request: Request, comment_id: int) -> Response:
     """PUT: 自分のコメント編集, DELETE: 自分のコメント削除"""
+    assert request.user.is_authenticated
     try:
         comment = Comment.objects.get(id=comment_id, user=request.user)
     except Comment.DoesNotExist:
@@ -413,6 +418,7 @@ def comment_detail_view(request: Request, comment_id: int) -> Response:
     elif request.method == "DELETE":
         comment.delete()
         return Response({"ok": True})
+    return Response({"error": "Method not allowed"}, status=405)
 
 
 # ============================================================
@@ -421,6 +427,7 @@ def comment_detail_view(request: Request, comment_id: int) -> Response:
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes([IsAuthenticated])
 def search_history_view(request: Request) -> Response:
+    assert request.user.is_authenticated
     if request.method == "GET":
         histories = SearchHistory.objects.filter(user=request.user)[:50]  # 最新50件
         return Response(SearchHistorySerializer(histories, many=True).data)
@@ -436,6 +443,7 @@ def search_history_view(request: Request) -> Response:
     elif request.method == "DELETE":
         SearchHistory.objects.filter(user=request.user).delete()
         return Response({"ok": True})
+    return Response({"error": "Method not allowed"}, status=405)
 
 
 # ============================================================
@@ -456,7 +464,7 @@ def share_view(request: Request, shop_id: str) -> Response:
 
     # シェア用テキスト
     shop_name = shop.name if shop else ""
-    share_text = f"おすすめの居酒屋{('「' + shop_name + '」') if shop_name else ''}を見つけました！\n{share_url}"
+    share_text = f"おすすめの飲食店{('「' + shop_name + '」') if shop_name else ''}を見つけました！\n{share_url}"
 
     response_data = {
         "shop": ShopSerializer(shop).data if shop else None,

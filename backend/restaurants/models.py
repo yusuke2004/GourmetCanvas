@@ -112,6 +112,9 @@ class Comment(models.Model):
         db_table = "comments"
         ordering = ["-created_at"]
 
+    def __str__(self):
+        return f"{self.author_name}: {self.text[:50]}"
+
 
 class SearchHistory(models.Model):
     """検索履歴 (ユーザーごと)"""
@@ -129,6 +132,3 @@ class SearchHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
-
-    def __str__(self):
-        return f"{self.author_name}: {self.text[:50]}"

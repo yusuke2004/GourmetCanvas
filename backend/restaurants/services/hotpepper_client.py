@@ -111,10 +111,9 @@ def search_restaurants(
         "order": 4    # 4: おすめ順 (HotPepper標準の独自のスコアリングアルゴリズム)
     }
 
-    
-    # 未指定の場合はデフォルトで「居酒屋」(G001)のみを対象にする
-    params["genre"] = genre if genre else "G001"
-    
+    # パラメータのジャンル指定があれば追加（未指定のばあいは全てのジャンルを対象とする）
+    if genre:
+        params["genre"] = genre
     if budget:
         params["budget"] = budget
     if keyword:
@@ -150,18 +149,10 @@ def search_restaurants(
                 continue
 
             # 2. ジャンル厳密一致チェック
-            # Pythonのバグ修正: 以前の条件式はチェーンされて正しく動いていなかった
             target_genre = params.get("genre")
             if target_genre:
                 shop_genre_code = shop.get("genre", {}).get("code", "")
                 if shop_genre_code != target_genre:
-                    continue
-                    
-            # 3. 居酒屋(G001)指定時のノイズ除外
-            # 「Bar」や「バル」などはHotPepper上ではG001に登録されている事があるため、名前ベースで弾く
-            if target_genre == "G001":
-                lower_name = shop_name.lower()
-                if "bar" in lower_name or "バル" in lower_name:
                     continue
             
             filtered_shops.append(shop)
@@ -236,8 +227,8 @@ def search_by_keyword(
         "order": 4
     }
 
-    params["genre"] = genre if genre else "G001"
-    
+    if genre:
+        params["genre"] = genre
     if budget:
         params["budget"] = budget
     if people:
@@ -272,11 +263,6 @@ def search_by_keyword(
             if target_genre:
                 shop_genre_code = shop.get("genre", {}).get("code", "")
                 if shop_genre_code != target_genre:
-                    continue
-                    
-            if target_genre == "G001":
-                lower_name = shop_name.lower()
-                if "bar" in lower_name or "バル" in lower_name:
                     continue
             
             filtered_shops.append(shop)
