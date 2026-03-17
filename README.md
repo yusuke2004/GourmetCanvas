@@ -1,4 +1,4 @@
-# IzakayaReco
+# GourmetCanvas
 
 居酒屋検索・レビュー用のシンプルな Django/Vite アプリケーション。
 
@@ -9,7 +9,7 @@
 1. リポジトリをクローン
    ```bash
    git clone <repo-url>
-   cd izakaya-reco
+   cd GourmetCanvas
    ```
 2. Python 仮想環境を作成・有効化
    ```bash
