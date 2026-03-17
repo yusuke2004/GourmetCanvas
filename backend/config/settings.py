@@ -74,7 +74,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # frontend/build または frontend/dist にビルドされた index.html を置く
-        "DIRS": [BASE_DIR.parent / "frontend" / "dist"],
+        "DIRS": [BASE_DIR / "frontend" / "dist"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -162,10 +162,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # 追加: フロントエンドのビルド済みファイルを静的検索パスに追加
-STATICFILES_DIRS = [BASE_DIR.parent / "frontend" / "dist"]
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "dist"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CORS_ALLOW_ALL_ORIGINS = True
