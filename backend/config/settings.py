@@ -23,6 +23,18 @@ if os.path.exists(env_path):
     load_dotenv(env_path)
 
 
+# frontend/dist のパス候補
+FRONTEND_DIST_CANDIDATES = [
+    BASE_DIR / "frontend" / "dist",
+    BASE_DIR.parent / "frontend" / "dist",
+]
+
+FRONTEND_DIST_DIR = next(
+    (p for p in FRONTEND_DIST_CANDIDATES if p.exists()),
+    FRONTEND_DIST_CANDIDATES[0],
+)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -74,7 +86,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # frontend/build または frontend/dist にビルドされた index.html を置く
-        "DIRS": [BASE_DIR / "frontend" / "dist"],
+        "DIRS": [FRONTEND_DIST_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -165,7 +177,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # 追加: フロントエンドのビルド済みファイルを静的検索パスに追加
-STATICFILES_DIRS = [BASE_DIR / "frontend" / "dist"]
+STATICFILES_DIRS = [FRONTEND_DIST_DIR]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CORS_ALLOW_ALL_ORIGINS = True
