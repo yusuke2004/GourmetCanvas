@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for PostgreSQL
+# Install system dependencies for PostgreSQL and frontend build
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
@@ -13,15 +13,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python dependencies
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
 # Copy source code
-COPY backend/ .
-COPY frontend/ ./frontend/
+COPY backend/ /app/backend/
+COPY frontend/ /app/frontend/
 
 # Build frontend
-RUN cd frontend && npm install && npm run build
+WORKDIR /app/frontend
+RUN npm install
+RUN npm run build
+
+# Move to Django backend
+WORKDIR /app/backend
 
 # Collect static files
 RUN python manage.py collectstatic --noinput
@@ -29,5 +34,5 @@ RUN python manage.py collectstatic --noinput
 # Expose port
 EXPOSE 8000
 
-# Start command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Start with gunicorn
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]

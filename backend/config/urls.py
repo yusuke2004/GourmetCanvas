@@ -3,13 +3,19 @@ from django.urls import path, include, re_path
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    # フロントエンド単ページアプリのエントリ
-    path("", TemplateView.as_view(template_name="index.html"), name="root"),
-
-    # 管理画面と REST API
+    # 管理画面
     path("admin/", admin.site.urls),
+
+    # API
     path("api/restaurants/", include("restaurants.urls")),
 
-    # その他のパスもすべて index.html にフォールバック
-    re_path(r"^(?:.*)/?$", TemplateView.as_view(template_name="index.html")),
+    # ルート
+    path("", TemplateView.as_view(template_name="index.html"), name="root"),
+
+    # React Router 用フォールバック
+    # api / admin / static / media は除外する
+    re_path(
+        r"^(?!api/|admin/|static/|media/).*$",
+        TemplateView.as_view(template_name="index.html"),
+    ),
 ]
